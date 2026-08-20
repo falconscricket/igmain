@@ -37,14 +37,12 @@ const FONT_MEDIUM = registeredFonts.includes('Poppins-Medium') ? 'Poppins-Medium
 // ── Track last type for alternating ──────────────────────────────
 let lastType = 'love'; // start with anime girl first
 
-// ── Anime girl categories (waifu.pics SFW) ───────────────────────
-const ANIME_GIRL_CATS = ['waifu', 'neko', 'shinobu', 'megumin', 'smile', 'happy', 'blush', 'wave', 'dance'];
-
-// ── Anime boy categories (waifu.pics SFW) ────────────────────────
-const ANIME_BOY_CATS  = ['husbando', 'kitsune'];
-
-// ── Anime love/couple categories (waifu.pics SFW) ─────────────────
-const ANIME_LOVE_CATS = ['hug', 'kiss', 'cuddle', 'handhold'];
+// ── Anime character tags (Safebooru, rating:safe only) ────────────
+// These pull real character art (Naruto/One Piece etc.) instead of the
+// generic non-character categories waifu.pics offered.
+const ANIME_GIRL_CATS = ['hinata_hyuga', 'sakura_haruno', 'nami_(one_piece)', 'nico_robin', 'boa_hancock', 'tsunade_(naruto)'];
+const ANIME_BOY_CATS  = ['naruto_uzumaki', 'sasuke_uchiha', 'kakashi_hatake', 'monkey_d._luffy', 'roronoa_zoro'];
+const ANIME_LOVE_CATS = ['naruto_uzumaki hinata_hyuga', 'sasuke_uchiha sakura_haruno', 'monkey_d._luffy nami_(one_piece)'];
 
 // ── De-dup tracking ───────────────────────────────────────────────
 function loadPosted() {
@@ -71,30 +69,38 @@ function isPosted(url) { return loadPosted().includes(url); }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Last-resort fallback that doesn't depend on api.waifu.pics at all.
-// Used only if every waifu.pics category is unreachable (e.g. DNS/
-// network issue on the host), so a single flaky domain can never take
-// the whole posting run down.
+// Last-resort fallback that doesn't depend on Safebooru at all. Used
+// only if every tag search fails (e.g. DNS/network issue on the host),
+// so a single flaky domain can never take the whole posting run down.
+// Note: this is real photos, NOT anime — it only fires if the anime
+// source is completely unreachable.
 function picsumFallback() {
   const seed = Date.now();
   const url = `https://picsum.photos/1080/1350?random=${seed}`;
-  logger.warn(`All waifu.pics attempts failed — using picsum fallback: ${url}`);
+  logger.warn(`All Safebooru attempts failed — using non-anime picsum fallback: ${url}`);
   return { imageUrl: url, type: 'love', category: 'aesthetic' };
 }
 
 // ── Image fetch with retry ────────────────────────────────────────
-// Generic helper: tries up to 5 times against waifu.pics with a short
-// exponential backoff between attempts (avoids hammering a broken DNS
-// lookup 5x in the same second, which just repeats the same failure).
-async function fetchFromWaifuPics(categories, label) {
+// Generic helper: searches Safebooru (SFW-only board) for the given
+// character tag(s), tries up to 5 times with short exponential
+// backoff between attempts.
+async function fetchFromSafebooru(tagOptions, label) {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const cat = categories[Math.floor(Math.random() * categories.length)];
+    const tags = tagOptions[Math.floor(Math.random() * tagOptions.length)];
     try {
-      const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
-      const url = res.data?.url;
-      if (url && !isPosted(url)) {
-        logger.info(`${label} [${cat}]: ${url}`);
-        return { imageUrl: url, cat };
+      const query = `${tags} rating:safe`;
+      const res = await axios.get('https://safebooru.org/index.php', {
+        params: { page: 'dapi', s: 'post', q: 'index', json: 1, tags: query, limit: 100 },
+        timeout: 15000,
+      });
+      const posts = Array.isArray(res.data) ? res.data : [];
+      const candidates = posts.filter(p => p?.directory && p?.image && !isPosted(`https://safebooru.org/images/${p.directory}/${p.image}`));
+      if (candidates.length > 0) {
+        const post = candidates[Math.floor(Math.random() * candidates.length)];
+        const url = `https://safebooru.org/images/${post.directory}/${post.image}`;
+        logger.info(`${label} [${tags}]: ${url}`);
+        return { imageUrl: url, cat: tags };
       }
     } catch (e) {
       logger.warn(`${label} fetch attempt ${attempt + 1} failed: ${e.message}`);
@@ -105,20 +111,20 @@ async function fetchFromWaifuPics(categories, label) {
 }
 
 async function fetchAnimeGirlImage() {
-  const result = await fetchFromWaifuPics(ANIME_GIRL_CATS, 'Anime girl');
+  const result = await fetchFromSafebooru(ANIME_GIRL_CATS, 'Anime girl');
   if (result) return { imageUrl: result.imageUrl, type: 'anime_girl', category: result.cat };
   return picsumFallback();
 }
 
 async function fetchAnimeBoyImage() {
-  const result = await fetchFromWaifuPics(ANIME_BOY_CATS, 'Anime boy');
+  const result = await fetchFromSafebooru(ANIME_BOY_CATS, 'Anime boy');
   if (result) return { imageUrl: result.imageUrl, type: 'anime_boy', category: result.cat };
   logger.warn('Boy fetch failed — falling back to girl');
   return await fetchAnimeGirlImage();
 }
 
 async function fetchLoveImage() {
-  const result = await fetchFromWaifuPics(ANIME_LOVE_CATS, 'Anime love');
+  const result = await fetchFromSafebooru(ANIME_LOVE_CATS, 'Anime love');
   if (result) return { imageUrl: result.imageUrl, type: 'love', category: result.cat };
   logger.warn('Love fetch failed — falling back to anime girl');
   return await fetchAnimeGirlImage();
