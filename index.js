@@ -14,12 +14,19 @@
  */
 
 import 'dotenv/config';
+import dns from 'node:dns';
 import express from 'express';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger.js';
 import { startScheduler, runTask } from './scheduler.js';
 import { IMAGES_DIR } from './profileCard.js';
+
+// Some container network environments (including Railway) resolve IPv6
+// addresses for hosts that aren't actually reachable over IPv6 from the
+// container, causing getaddrinfo ENOTFOUND even though the domain is
+// live. Preferring IPv4 first avoids that class of DNS failures.
+dns.setDefaultResultOrder('ipv4first');
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
