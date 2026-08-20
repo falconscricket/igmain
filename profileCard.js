@@ -69,9 +69,16 @@ export function markImageAsPosted(url) {
 
 function isPosted(url) { return loadPosted().includes(url); }
 
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // ── Image fetch with retry ────────────────────────────────────────
+// Small backoff between retries so a transient DNS/network blip doesn't
+// burn through all attempts in the same instant (they'd all fail together).
+function retryDelay(attempt) { return 500 * (attempt + 1); }
+
 async function fetchAnimeGirlImage() {
   for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt > 0) await sleep(retryDelay(attempt));
     const cat = ANIME_GIRL_CATS[Math.floor(Math.random() * ANIME_GIRL_CATS.length)];
     try {
       const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
@@ -87,6 +94,7 @@ async function fetchAnimeGirlImage() {
 
 async function fetchAnimeBoyImage() {
   for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt > 0) await sleep(retryDelay(attempt));
     const cat = ANIME_BOY_CATS[Math.floor(Math.random() * ANIME_BOY_CATS.length)];
     try {
       const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
@@ -104,6 +112,7 @@ async function fetchAnimeBoyImage() {
 
 async function fetchLoveImage() {
   for (let attempt = 0; attempt < 5; attempt++) {
+    if (attempt > 0) await sleep(retryDelay(attempt));
     const cat = ANIME_LOVE_CATS[Math.floor(Math.random() * ANIME_LOVE_CATS.length)];
     try {
       const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
