@@ -38,11 +38,59 @@ const FONT_MEDIUM = registeredFonts.includes('Poppins-Medium') ? 'Poppins-Medium
 let lastType = 'love'; // start with anime girl first
 
 // ── Anime character tags (Safebooru, rating:safe only) ────────────
-// These pull real character art (Naruto/One Piece etc.) instead of the
-// generic non-character categories waifu.pics offered.
-const ANIME_GIRL_CATS = ['hinata_hyuga', 'sakura_haruno', 'nami_(one_piece)', 'nico_robin', 'boa_hancock', 'tsunade_(naruto)'];
-const ANIME_BOY_CATS  = ['naruto_uzumaki', 'sasuke_uchiha', 'kakashi_hatake', 'monkey_d._luffy', 'roronoa_zoro'];
-const ANIME_LOVE_CATS = ['naruto_uzumaki hinata_hyuga', 'sasuke_uchiha sakura_haruno', 'monkey_d._luffy nami_(one_piece)'];
+// Popular characters across many series — Naruto, One Piece, Attack
+// on Titan, Demon Slayer, My Hero Academia, Jujutsu Kaisen, Dragon
+// Ball, Bleach, Death Note, Hunter x Hunter, Fullmetal Alchemist,
+// Fairy Tail, Sword Art Online, Chainsaw Man, Spy x Family,
+// Solo Leveling, Re:Zero, Konosuba.
+const ANIME_GIRL_CATS = [
+  'hinata_hyuga', 'sakura_haruno', 'tsunade_(naruto)',
+  'nami_(one_piece)', 'nico_robin', 'boa_hancock',
+  'mikasa_ackerman', 'historia_reiss',
+  'nezuko_kamado', 'shinobu_kocho', 'kanao_tsuyuri',
+  'ochaco_uraraka', 'tsuyu_asui', 'himiko_toga',
+  'nobara_kugisaki', 'maki_zenin',
+  'android_18', 'bulma', 'chichi_(dragon_ball)',
+  'rukia_kuchiki', 'orihime_inoue',
+  'winry_rockbell', 'riza_hawkeye',
+  'erza_scarlet', 'lucy_heartfilia',
+  'asuna_(sword_art_online)',
+  'power_(chainsaw_man)', 'makima_(chainsaw_man)',
+  'anya_forger', 'yor_forger',
+  'rem_(re:zero)', 'emilia_(re:zero)',
+  'megumin', 'aqua_(konosuba)',
+];
+
+const ANIME_BOY_CATS = [
+  'naruto_uzumaki', 'sasuke_uchiha', 'kakashi_hatake',
+  'monkey_d._luffy', 'roronoa_zoro', 'sanji_(one_piece)',
+  'eren_yeager', 'levi_ackerman',
+  'tanjiro_kamado', 'zenitsu_agatsuma', 'inosuke_hashibira',
+  'izuku_midoriya', 'katsuki_bakugo', 'shoto_todoroki',
+  'yuji_itadori', 'megumi_fushiguro', 'satoru_gojo',
+  'son_goku', 'vegeta',
+  'light_yagami', 'l_(death_note)',
+  'gon_freecss', 'killua_zoldyck',
+  'edward_elric',
+  'natsu_dragneel',
+  'kirito_(sword_art_online)',
+  'denji_(chainsaw_man)',
+  'loid_forger',
+  'ichigo_kurosaki',
+];
+
+const ANIME_LOVE_CATS = [
+  'naruto_uzumaki hinata_hyuga',
+  'sasuke_uchiha sakura_haruno',
+  'monkey_d._luffy nami_(one_piece)',
+  'eren_yeager mikasa_ackerman',
+  'izuku_midoriya ochaco_uraraka',
+  'yuji_itadori nobara_kugisaki',
+  'kirito_(sword_art_online) asuna_(sword_art_online)',
+  'natsu_dragneel lucy_heartfilia',
+  'loid_forger yor_forger',
+  'edward_elric winry_rockbell',
+];
 
 // ── De-dup tracking ───────────────────────────────────────────────
 function loadPosted() {
@@ -95,12 +143,21 @@ async function fetchFromSafebooru(tagOptions, label) {
         timeout: 15000,
       });
       const posts = Array.isArray(res.data) ? res.data : [];
-      const candidates = posts.filter(p => p?.directory && p?.image && !isPosted(`https://safebooru.org/images/${p.directory}/${p.image}`));
+      // Prefer the pre-resized "sample" image (~850-1000px) over the
+      // full original — originals can be 4000-6000px+, which are slow
+      // to download and unnecessarily huge for a 1080x1350 canvas.
+      const pickUrl = (p) => {
+        if (p?.sample === 1 && p?.sample_url) return p.sample_url;
+        if (p?.directory && p?.image) return `https://safebooru.org/images/${p.directory}/${p.image}`;
+        return null;
+      };
+      const candidates = posts
+        .map(p => ({ post: p, url: pickUrl(p) }))
+        .filter(c => c.url && !isPosted(c.url));
       if (candidates.length > 0) {
-        const post = candidates[Math.floor(Math.random() * candidates.length)];
-        const url = `https://safebooru.org/images/${post.directory}/${post.image}`;
-        logger.info(`${label} [${tags}]: ${url}`);
-        return { imageUrl: url, cat: tags };
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        logger.info(`${label} [${tags}]: ${chosen.url}`);
+        return { imageUrl: chosen.url, cat: tags };
       }
     } catch (e) {
       logger.warn(`${label} fetch attempt ${attempt + 1} failed: ${e.message}`);
