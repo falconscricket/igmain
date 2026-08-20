@@ -69,61 +69,57 @@ export function markImageAsPosted(url) {
 
 function isPosted(url) { return loadPosted().includes(url); }
 
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Last-resort fallback that doesn't depend on api.waifu.pics at all.
+// Used only if every waifu.pics category is unreachable (e.g. DNS/
+// network issue on the host), so a single flaky domain can never take
+// the whole posting run down.
+function picsumFallback() {
+  const seed = Date.now();
+  const url = `https://picsum.photos/1080/1350?random=${seed}`;
+  logger.warn(`All waifu.pics attempts failed — using picsum fallback: ${url}`);
+  return { imageUrl: url, type: 'love', category: 'aesthetic' };
+}
 
 // ── Image fetch with retry ────────────────────────────────────────
-// Small backoff between retries so a transient DNS/network blip doesn't
-// burn through all attempts in the same instant (they'd all fail together).
-function retryDelay(attempt) { return 500 * (attempt + 1); }
-
-async function fetchAnimeGirlImage() {
+// Generic helper: tries up to 5 times against waifu.pics with a short
+// exponential backoff between attempts (avoids hammering a broken DNS
+// lookup 5x in the same second, which just repeats the same failure).
+async function fetchFromWaifuPics(categories, label) {
   for (let attempt = 0; attempt < 5; attempt++) {
-    if (attempt > 0) await sleep(retryDelay(attempt));
-    const cat = ANIME_GIRL_CATS[Math.floor(Math.random() * ANIME_GIRL_CATS.length)];
+    const cat = categories[Math.floor(Math.random() * categories.length)];
     try {
       const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
       const url = res.data?.url;
       if (url && !isPosted(url)) {
-        logger.info(`Anime girl [${cat}]: ${url}`);
-        return { imageUrl: url, type: 'anime_girl', category: cat };
+        logger.info(`${label} [${cat}]: ${url}`);
+        return { imageUrl: url, cat };
       }
-    } catch (e) { logger.warn(`Girl fetch attempt ${attempt+1} failed: ${e.message}`); }
+    } catch (e) {
+      logger.warn(`${label} fetch attempt ${attempt + 1} failed: ${e.message}`);
+      if (attempt < 4) await sleep(500 * Math.pow(2, attempt)); // 500ms, 1s, 2s, 4s
+    }
   }
-  throw new Error('Could not fetch unique anime girl image');
+  return null;
+}
+
+async function fetchAnimeGirlImage() {
+  const result = await fetchFromWaifuPics(ANIME_GIRL_CATS, 'Anime girl');
+  if (result) return { imageUrl: result.imageUrl, type: 'anime_girl', category: result.cat };
+  return picsumFallback();
 }
 
 async function fetchAnimeBoyImage() {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    if (attempt > 0) await sleep(retryDelay(attempt));
-    const cat = ANIME_BOY_CATS[Math.floor(Math.random() * ANIME_BOY_CATS.length)];
-    try {
-      const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
-      const url = res.data?.url;
-      if (url && !isPosted(url)) {
-        logger.info(`Anime boy [${cat}]: ${url}`);
-        return { imageUrl: url, type: 'anime_boy', category: cat };
-      }
-    } catch (e) { logger.warn(`Boy fetch attempt ${attempt+1} failed: ${e.message}`); }
-  }
-  // Fallback to girl if boy fails
+  const result = await fetchFromWaifuPics(ANIME_BOY_CATS, 'Anime boy');
+  if (result) return { imageUrl: result.imageUrl, type: 'anime_boy', category: result.cat };
   logger.warn('Boy fetch failed — falling back to girl');
   return await fetchAnimeGirlImage();
 }
 
 async function fetchLoveImage() {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    if (attempt > 0) await sleep(retryDelay(attempt));
-    const cat = ANIME_LOVE_CATS[Math.floor(Math.random() * ANIME_LOVE_CATS.length)];
-    try {
-      const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
-      const url = res.data?.url;
-      if (url && !isPosted(url)) {
-        logger.info(`Anime love [${cat}]: ${url}`);
-        return { imageUrl: url, type: 'love', category: cat };
-      }
-    } catch (e) { logger.warn(`Love fetch attempt ${attempt+1} failed: ${e.message}`); }
-  }
-  // Fallback to girl if love couple images fail
+  const result = await fetchFromWaifuPics(ANIME_LOVE_CATS, 'Anime love');
+  if (result) return { imageUrl: result.imageUrl, type: 'love', category: result.cat };
   logger.warn('Love fetch failed — falling back to anime girl');
   return await fetchAnimeGirlImage();
 }
