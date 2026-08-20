@@ -28,6 +28,22 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Meta's "User is performing too many actions" is a rate-limit / anti-
+// spam throttle, not a transient network error. Retrying it after a
+// short 5s delay almost always hits the same block again and wastes
+// the whole retry budget in seconds. Detect it and back off much
+// longer instead.
+function isRateLimitError(err) {
+  const apiError = err.response?.data?.error;
+  const message = (apiError?.message || err.message || '').toLowerCase();
+  const code = apiError?.code;
+  return (
+    message.includes('too many actions') ||
+    message.includes('too many requests') ||
+    code === 4 || code === 17 || code === 32 || code === 9
+  );
+}
+
 /**
  * Create a media container on Instagram pointing at the given
  * publicly-accessible image URL.
@@ -137,7 +153,12 @@ export async function postToInstagram({ imageUrl, caption, maxRetries = 3 }) {
       const apiMessage = err.response?.data?.error?.message || err.message;
       logger.warn(`Failed to create media container on attempt ${attempt}: ${apiMessage}`);
       if (attempt < maxRetries) {
-        await sleep(5000);
+        if (isRateLimitError(err)) {
+          logger.warn('Rate limit detected — backing off 90s before retry.');
+          await sleep(90000);
+        } else {
+          await sleep(5000);
+        }
       }
     }
   }
@@ -162,7 +183,12 @@ export async function postToInstagram({ imageUrl, caption, maxRetries = 3 }) {
       const apiMessage = err.response?.data?.error?.message || err.message;
       logger.warn(`Failed to publish media on attempt ${attempt}: ${apiMessage}`);
       if (attempt < maxRetries) {
-        await sleep(5000);
+        if (isRateLimitError(err)) {
+          logger.warn('Rate limit detected — backing off 90s before retry.');
+          await sleep(90000);
+        } else {
+          await sleep(5000);
+        }
       }
     }
   }
