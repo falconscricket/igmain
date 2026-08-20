@@ -37,59 +37,71 @@ const FONT_MEDIUM = registeredFonts.includes('Poppins-Medium') ? 'Poppins-Medium
 // ── Track last type for alternating ──────────────────────────────
 let lastType = 'love'; // start with anime girl first
 
-// ── Anime character tags (Safebooru, rating:safe only) ────────────
-// Popular characters across many series — Naruto, One Piece, Attack
-// on Titan, Demon Slayer, My Hero Academia, Jujutsu Kaisen, Dragon
-// Ball, Bleach, Death Note, Hunter x Hunter, Fullmetal Alchemist,
-// Fairy Tail, Sword Art Online, Chainsaw Man, Spy x Family,
-// Solo Leveling, Re:Zero, Konosuba.
+// ── Anime character search terms (Wallhaven — curated wallpapers) ──
+// Wallhaven is a dedicated wallpaper platform (not a fanart dump), so
+// results are consistently high-res, well-composed "wallpaper style"
+// images — much closer to what you'd want to actually post, and it
+// supports minimum-resolution filtering for real 4K.
+// Popular characters across Naruto, One Piece, Attack on Titan,
+// Demon Slayer, My Hero Academia, Jujutsu Kaisen, Dragon Ball,
+// Bleach, Sword Art Online, Fairy Tail, Re:Zero, Konosuba.
 const ANIME_GIRL_CATS = [
-  'hinata_hyuga', 'sakura_haruno', 'tsunade_(naruto)',
-  'nami_(one_piece)', 'nico_robin', 'boa_hancock',
-  'mikasa_ackerman', 'historia_reiss',
-  'nezuko_kamado', 'shinobu_kocho', 'kanao_tsuyuri',
-  'ochaco_uraraka', 'tsuyu_asui', 'himiko_toga',
-  'nobara_kugisaki', 'maki_zenin',
-  'android_18', 'bulma', 'chichi_(dragon_ball)',
-  'rukia_kuchiki', 'orihime_inoue',
-  'winry_rockbell', 'riza_hawkeye',
-  'erza_scarlet', 'lucy_heartfilia',
-  'asuna_(sword_art_online)',
-  'power_(chainsaw_man)', 'makima_(chainsaw_man)',
-  'anya_forger', 'yor_forger',
-  'rem_(re:zero)', 'emilia_(re:zero)',
-  'megumin', 'aqua_(konosuba)',
+  'hinata hyuga', 'sakura haruno', 'tsunade naruto',
+  'nami one piece', 'nico robin', 'boa hancock',
+  'mikasa ackerman', 'historia reiss',
+  'nezuko kamado', 'shinobu kocho', 'kanao tsuyuri',
+  'mitsuri kanroji', 'aoi kanzaki demon slayer',
+  'ochaco uraraka', 'himiko toga',
+  'momo yaoyorozu', 'kyoka jiro',
+  'nobara kugisaki', 'maki zenin', 'utahime iori', 'kasumi miwa jjk',
+  'android 18', 'bulma dragon ball',
+  'rukia kuchiki', 'orihime inoue',
+  'winry rockbell', 'riza hawkeye',
+  'erza scarlet', 'lucy heartfilia',
+  'asuna sword art online',
+  'power chainsaw man', 'makima chainsaw man', 'reze chainsaw man',
+  'anya forger', 'yor forger',
+  'rem re zero', 'emilia re zero',
+  'megumin konosuba', 'aqua konosuba',
+  // newer / trending anime (2023-2026)
+  'frieren', 'fern frieren',
+  'ai hoshino oshi no ko', 'ruby hoshino oshi no ko',
+  'cha hae-in solo leveling',
+  'marin kitagawa my dress-up darling',
+  'kaguya shinomiya', 'chika fujiwara',
+  'bocchi hitori', 'nijika ijichi bocchi the rock',
+  'momo ayase dandadan',
+  'chizuru mizuhara rent a girlfriend',
+  'kyoko hori horimiya',
+  'marcille donato delicious in dungeon',
+  'albedo overlord',
+  'kei karuizawa classroom of the elite',
+  'nene yashiro hanako kun',
 ];
 
 const ANIME_BOY_CATS = [
-  'naruto_uzumaki', 'sasuke_uchiha', 'kakashi_hatake',
-  'monkey_d._luffy', 'roronoa_zoro', 'sanji_(one_piece)',
-  'eren_yeager', 'levi_ackerman',
-  'tanjiro_kamado', 'zenitsu_agatsuma', 'inosuke_hashibira',
-  'izuku_midoriya', 'katsuki_bakugo', 'shoto_todoroki',
-  'yuji_itadori', 'megumi_fushiguro', 'satoru_gojo',
-  'son_goku', 'vegeta',
-  'light_yagami', 'l_(death_note)',
-  'gon_freecss', 'killua_zoldyck',
-  'edward_elric',
-  'natsu_dragneel',
-  'kirito_(sword_art_online)',
-  'denji_(chainsaw_man)',
-  'loid_forger',
-  'ichigo_kurosaki',
+  'naruto uzumaki', 'sasuke uchiha', 'kakashi hatake',
+  'luffy one piece', 'zoro one piece', 'sanji one piece',
+  'eren yeager', 'levi ackerman',
+  'tanjiro kamado', 'zenitsu agatsuma', 'inosuke hashibira',
+  'izuku midoriya', 'bakugo', 'todoroki',
+  'yuji itadori', 'megumi fushiguro', 'gojo satoru',
+  'goku dragon ball', 'vegeta',
+  'light yagami death note', 'l death note',
+  'gon freecss', 'killua zoldyck',
+  'edward elric',
+  'natsu dragneel',
+  'kirito sword art online',
+  'denji chainsaw man',
+  'loid forger',
+  'ichigo kurosaki',
 ];
 
 const ANIME_LOVE_CATS = [
-  'naruto_uzumaki hinata_hyuga',
-  'sasuke_uchiha sakura_haruno',
-  'monkey_d._luffy nami_(one_piece)',
-  'eren_yeager mikasa_ackerman',
-  'izuku_midoriya ochaco_uraraka',
-  'yuji_itadori nobara_kugisaki',
-  'kirito_(sword_art_online) asuna_(sword_art_online)',
-  'natsu_dragneel lucy_heartfilia',
-  'loid_forger yor_forger',
-  'edward_elric winry_rockbell',
+  'naruto hinata', 'sasuke sakura', 'luffy nami',
+  'eren mikasa', 'izuku ochaco', 'kirito asuna',
+  'natsu lucy', 'loid yor', 'edward winry',
+  'anime couple aesthetic', 'anime couple wallpaper',
 ];
 
 // ── De-dup tracking ───────────────────────────────────────────────
@@ -117,25 +129,61 @@ function isPosted(url) { return loadPosted().includes(url); }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Last-resort fallback that doesn't depend on Safebooru at all. Used
-// only if every tag search fails (e.g. DNS/network issue on the host),
-// so a single flaky domain can never take the whole posting run down.
-// Note: this is real photos, NOT anime — it only fires if the anime
-// source is completely unreachable.
+// Last-resort fallback that doesn't depend on any anime source at
+// all. Used only if BOTH Wallhaven and Safebooru fail (e.g. DNS/
+// network issue on the host), so a single flaky domain can never
+// take the whole posting run down. Note: real photos, NOT anime —
+// only fires if every anime source is completely unreachable.
 function picsumFallback() {
   const seed = Date.now();
   const url = `https://picsum.photos/1080/1350?random=${seed}`;
-  logger.warn(`All Safebooru attempts failed — using non-anime picsum fallback: ${url}`);
+  logger.warn(`All anime sources failed — using non-anime picsum fallback: ${url}`);
   return { imageUrl: url, type: 'love', category: 'aesthetic' };
 }
 
-// ── Image fetch with retry ────────────────────────────────────────
-// Generic helper: searches Safebooru (SFW-only board) for the given
-// character tag(s), tries up to 5 times with short exponential
-// backoff between attempts.
+function buildWallhavenQuery(term) {
+  // Wallhaven treats space-separated terms as OR by default; prefix
+  // each word with + so ALL words are required (proper phrase match).
+  return term.split(' ').map(w => `+${w}`).join(' ');
+}
+
+// ── Primary source: Wallhaven (curated 4K wallpapers, anime only) ──
+async function fetchFromWallhaven(termOptions, label) {
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const term = termOptions[Math.floor(Math.random() * termOptions.length)];
+    try {
+      const res = await axios.get('https://wallhaven.cc/api/v1/search', {
+        params: {
+          q: buildWallhavenQuery(term),
+          categories: '010',   // general/anime/people — anime only
+          purity: '100',       // SFW only
+          atleast: '1920x1080', // minimum HD, plenty are true 4K
+          sorting: 'random',
+        },
+        timeout: 15000,
+      });
+      const results = Array.isArray(res.data?.data) ? res.data.data : [];
+      const candidates = results.filter(w => w?.path && !isPosted(w.path));
+      if (candidates.length > 0) {
+        const chosen = candidates[Math.floor(Math.random() * candidates.length)];
+        logger.info(`${label} [Wallhaven: ${term}] ${chosen.resolution}: ${chosen.path}`);
+        return { imageUrl: chosen.path, cat: term };
+      }
+    } catch (e) {
+      logger.warn(`${label} Wallhaven attempt ${attempt + 1} failed: ${e.message}`);
+      if (attempt < 3) await sleep(500 * Math.pow(2, attempt));
+    }
+  }
+  return null;
+}
+
+// ── Secondary source: Safebooru (used only if Wallhaven has no
+// results for a term, e.g. a less-common character/pairing) ────────
 async function fetchFromSafebooru(tagOptions, label) {
-  for (let attempt = 0; attempt < 5; attempt++) {
-    const tags = tagOptions[Math.floor(Math.random() * tagOptions.length)];
+  const toSafebooruTag = (term) => term.trim().replace(/\s+/g, '_');
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const term = tagOptions[Math.floor(Math.random() * tagOptions.length)];
+    const tags = toSafebooruTag(term);
     try {
       const query = `${tags} rating:safe`;
       const res = await axios.get('https://safebooru.org/index.php', {
@@ -143,9 +191,6 @@ async function fetchFromSafebooru(tagOptions, label) {
         timeout: 15000,
       });
       const posts = Array.isArray(res.data) ? res.data : [];
-      // Prefer the pre-resized "sample" image (~850-1000px) over the
-      // full original — originals can be 4000-6000px+, which are slow
-      // to download and unnecessarily huge for a 1080x1350 canvas.
       const pickUrl = (p) => {
         if (p?.sample === 1 && p?.sample_url) return p.sample_url;
         if (p?.directory && p?.image) return `https://safebooru.org/images/${p.directory}/${p.image}`;
@@ -156,32 +201,38 @@ async function fetchFromSafebooru(tagOptions, label) {
         .filter(c => c.url && !isPosted(c.url));
       if (candidates.length > 0) {
         const chosen = candidates[Math.floor(Math.random() * candidates.length)];
-        logger.info(`${label} [${tags}]: ${chosen.url}`);
+        logger.info(`${label} [Safebooru: ${tags}]: ${chosen.url}`);
         return { imageUrl: chosen.url, cat: tags };
       }
     } catch (e) {
-      logger.warn(`${label} fetch attempt ${attempt + 1} failed: ${e.message}`);
-      if (attempt < 4) await sleep(500 * Math.pow(2, attempt)); // 500ms, 1s, 2s, 4s
+      logger.warn(`${label} Safebooru attempt ${attempt + 1} failed: ${e.message}`);
+      if (attempt < 3) await sleep(500 * Math.pow(2, attempt));
     }
   }
   return null;
 }
 
 async function fetchAnimeGirlImage() {
-  const result = await fetchFromSafebooru(ANIME_GIRL_CATS, 'Anime girl');
+  let result = await fetchFromWallhaven(ANIME_GIRL_CATS, 'Anime girl');
+  if (result) return { imageUrl: result.imageUrl, type: 'anime_girl', category: result.cat };
+  result = await fetchFromSafebooru(ANIME_GIRL_CATS, 'Anime girl');
   if (result) return { imageUrl: result.imageUrl, type: 'anime_girl', category: result.cat };
   return picsumFallback();
 }
 
 async function fetchAnimeBoyImage() {
-  const result = await fetchFromSafebooru(ANIME_BOY_CATS, 'Anime boy');
+  let result = await fetchFromWallhaven(ANIME_BOY_CATS, 'Anime boy');
+  if (result) return { imageUrl: result.imageUrl, type: 'anime_boy', category: result.cat };
+  result = await fetchFromSafebooru(ANIME_BOY_CATS, 'Anime boy');
   if (result) return { imageUrl: result.imageUrl, type: 'anime_boy', category: result.cat };
   logger.warn('Boy fetch failed — falling back to girl');
   return await fetchAnimeGirlImage();
 }
 
 async function fetchLoveImage() {
-  const result = await fetchFromSafebooru(ANIME_LOVE_CATS, 'Anime love');
+  let result = await fetchFromWallhaven(ANIME_LOVE_CATS, 'Anime love');
+  if (result) return { imageUrl: result.imageUrl, type: 'love', category: result.cat };
+  result = await fetchFromSafebooru(ANIME_LOVE_CATS, 'Anime love');
   if (result) return { imageUrl: result.imageUrl, type: 'love', category: result.cat };
   logger.warn('Love fetch failed — falling back to anime girl');
   return await fetchAnimeGirlImage();
@@ -197,11 +248,24 @@ async function downloadBuffer(imageUrl) {
 }
 
 // ── Card renderer ─────────────────────────────────────────────────
-function drawCoverImage(ctx, img, W, H) {
+// Crops to a "cover" fit, but biases the vertical crop point toward
+// the top instead of dead-center. Anime character art almost always
+// has the face/head in the upper portion of the image — a pure
+// center-crop chops heads off when the source is much taller than
+// the 4:5 canvas. focusY=0 keeps the very top, 0.5 = old center-crop.
+function drawCoverImage(ctx, img, W, H, focusY = 0.22) {
   const r = img.width / img.height, cr = W / H;
   let dw, dh, dx, dy;
-  if (r > cr) { dh = H; dw = H * r; dx = -(dw - W) / 2; dy = 0; }
-  else         { dw = W; dh = W / r; dx = 0; dy = -(dh - H) / 2; }
+  if (r > cr) {
+    dh = H; dw = H * r;
+    dx = -(dw - W) / 2; // wide images: horizontal-only crop, center is fine
+    dy = 0;
+  } else {
+    dw = W; dh = W / r;
+    dx = 0;
+    const maxCropY = dh - H; // total vertical pixels being cropped away
+    dy = -maxCropY * focusY; // keep more of the top than the bottom
+  }
   ctx.drawImage(img, dx, dy, dw, dh);
 }
 
