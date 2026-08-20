@@ -43,6 +43,9 @@ const ANIME_GIRL_CATS = ['waifu', 'neko', 'shinobu', 'megumin', 'smile', 'happy'
 // ── Anime boy categories (waifu.pics SFW) ────────────────────────
 const ANIME_BOY_CATS  = ['husbando', 'kitsune'];
 
+// ── Anime love/couple categories (waifu.pics SFW) ─────────────────
+const ANIME_LOVE_CATS = ['hug', 'kiss', 'cuddle', 'handhold'];
+
 // ── De-dup tracking ───────────────────────────────────────────────
 function loadPosted() {
   try {
@@ -101,15 +104,19 @@ async function fetchAnimeBoyImage() {
 
 async function fetchLoveImage() {
   for (let attempt = 0; attempt < 5; attempt++) {
-    const seed = Math.floor(Math.random() * 9999);
-    const url  = `https://picsum.photos/1080/1350?random=${seed}`;
-    if (!isPosted(url)) {
-      logger.info(`Love/aesthetic seed: ${seed}`);
-      return { imageUrl: url, type: 'love', category: 'aesthetic' };
-    }
+    const cat = ANIME_LOVE_CATS[Math.floor(Math.random() * ANIME_LOVE_CATS.length)];
+    try {
+      const res = await axios.get(`https://api.waifu.pics/sfw/${cat}`, { timeout: 15000 });
+      const url = res.data?.url;
+      if (url && !isPosted(url)) {
+        logger.info(`Anime love [${cat}]: ${url}`);
+        return { imageUrl: url, type: 'love', category: cat };
+      }
+    } catch (e) { logger.warn(`Love fetch attempt ${attempt+1} failed: ${e.message}`); }
   }
-  const seed = Date.now();
-  return { imageUrl: `https://picsum.photos/1080/1350?random=${seed}`, type: 'love', category: 'aesthetic' };
+  // Fallback to girl if love couple images fail
+  logger.warn('Love fetch failed — falling back to anime girl');
+  return await fetchAnimeGirlImage();
 }
 
 async function downloadBuffer(imageUrl) {
