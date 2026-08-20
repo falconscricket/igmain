@@ -104,7 +104,7 @@ function savePosted(urls) {
   try {
     const dir = path.dirname(POSTED_LOG);
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-    fs.writeFileSync(POSTED_LOG, JSON.stringify(urls.slice(-200), null, 2));
+    fs.writeFileSync(POSTED_LOG, JSON.stringify(urls.slice(-5000), null, 2));
   } catch {}
 }
 
@@ -139,7 +139,7 @@ async function fetchFromSafebooru(tagOptions, label) {
     try {
       const query = `${tags} rating:safe`;
       const res = await axios.get('https://safebooru.org/index.php', {
-        params: { page: 'dapi', s: 'post', q: 'index', json: 1, tags: query, limit: 100 },
+        params: { page: 'dapi', s: 'post', q: 'index', json: 1, tags: query, limit: 100, pid: Math.floor(Math.random() * 6) },
         timeout: 15000,
       });
       const posts = Array.isArray(res.data) ? res.data : [];
