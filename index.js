@@ -19,7 +19,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger.js';
 import { startScheduler, runTask } from './scheduler.js';
-import { IMAGES_DIR } from './newsCard.js';
+import { IMAGES_DIR } from './profileCard.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT || 3000;
