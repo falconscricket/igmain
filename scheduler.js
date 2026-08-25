@@ -1,14 +1,15 @@
 /**
  * scheduler.js
  * ---------------------------------------------------------------
- * Every 30 mins — anime girl / anime boy / love aesthetic
- * Rotates: girl → boy → love → girl → boy → love...
+ * Every 30 mins — Anime Quiz post to Instagram
+ * Background = anime-specific wallpaper
+ * No answer revealed — engagement through comments
  * ---------------------------------------------------------------
  */
 
 import cron from 'node-cron';
 import { logger } from './logger.js';
-import { generateProfileCard, generateProfileCaption, cleanupProfileImage, markImageAsPosted } from './profileCard.js';
+import { generateQuizCard, generateQuizCaption, cleanupQuizImage, markQuizAsPosted } from './quizCard.js';
 import { postToInstagram } from './instagram.js';
 
 const CRON_SCHEDULE = process.env.CRON_SCHEDULE || '*/30 * * * *';
@@ -23,28 +24,27 @@ export async function runTask() {
   let item;
 
   try {
-    logger.info('Starting task...');
+    logger.info('Starting quiz task...');
 
-    // 1. Generate card
-    item = await generateProfileCard();
+    // 1. Generate quiz card
+    item = await generateQuizCard();
 
     const base = (process.env.PUBLIC_BASE_URL || '').replace(/\/+$/, '');
     if (!base) throw new Error('PUBLIC_BASE_URL not set.');
 
     const imageUrl = `${base}/images/${item.fileName}`;
-    const caption  = generateProfileCaption(item.type);
+    const caption  = generateQuizCaption(item.quiz);
 
-    // 2. Wait for Express
+    // 2. Wait for Express to serve
     await sleep(5000);
 
     // 3. Post to Instagram
-    logger.info(`Posting [${item.type}] to Instagram...`);
+    logger.info(`Posting quiz [${item.quiz.anime}] to Instagram...`);
     const postId = await postToInstagram({ imageUrl, caption });
-    logger.success(`Posted! ID: ${postId} [${item.type}]`);
+    logger.success(`Posted! ID: ${postId} — ${item.quiz.q.slice(0, 40)}...`);
 
-    // 4. Mark image URL as posted
-    markImageAsPosted(item.imageUrl);
-
+    // 4. Mark as posted
+    markQuizAsPosted(item.index);
     logger.info('Task complete!');
 
   } catch (err) {
@@ -52,7 +52,7 @@ export async function runTask() {
   } finally {
     if (item?.filePath) {
       await sleep(60000);
-      cleanupProfileImage(item.filePath);
+      cleanupQuizImage(item.filePath);
     }
     isTaskRunning = false;
     logger.info('Waiting for next schedule...');

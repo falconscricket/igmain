@@ -1,12 +1,10 @@
 {
-  "name": "ig-ai-image-bot",
-  "version": "1.0.0",
-  "description": "Automatically generates AI images every 2 hours and posts them to Instagram using the Pollinations AI API and the Instagram Graph API.",
+  "name": "ig-anime-quiz-bot",
+  "version": "2.0.0",
+  "description": "Auto posts anime quiz cards to Instagram every 30 mins",
   "type": "module",
   "main": "index.js",
-  "engines": {
-    "node": ">=20.0.0"
-  },
+  "engines": { "node": ">=20.0.0" },
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch index.js",
@@ -17,17 +15,7 @@
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "node-cron": "^3.0.3",
-    "rss-parser": "^3.13.0"
+    "node-cron": "^3.0.3"
   },
-  "license": "MIT",
-  "author": "",
-  "keywords": [
-    "instagram",
-    "ai",
-    "automation",
-    "pollinations",
-    "graph-api",
-    "cron"
-  ]
+  "license": "MIT"
 }

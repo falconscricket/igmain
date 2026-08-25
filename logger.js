@@ -1,51 +1,9 @@
-/**
- * logger.js
- * ---------------------------------------------------------------
- * Minimal, dependency-free logger that prefixes every line with a
- * timestamp and a level tag. Keeping this dependency-free avoids
- * pulling in a heavy logging library for what is a small bot.
- * ---------------------------------------------------------------
- */
-
-function timestamp() {
-  return new Date().toISOString();
-}
-
-function format(level, message) {
-  return `[${timestamp()}] [${level}] ${message}`;
-}
-
+const colors = { info: '\x1b[36m', success: '\x1b[32m', warn: '\x1b[33m', error: '\x1b[31m', reset: '\x1b[0m' };
+const ts = () => new Date().toISOString();
 export const logger = {
-  info(message) {
-    console.log(format('INFO', message));
-  },
-
-  warn(message) {
-    console.warn(format('WARN', message));
-  },
-
-  error(message, err) {
-    if (err instanceof Error) {
-      console.error(format('ERROR', `${message} -> ${err.message}`));
-      if (err.stack) {
-        console.error(err.stack);
-      }
-    } else if (err !== undefined) {
-      console.error(format('ERROR', `${message} -> ${JSON.stringify(err)}`));
-    } else {
-      console.error(format('ERROR', message));
-    }
-  },
-
-  success(message) {
-    console.log(format('SUCCESS', message));
-  },
-
-  debug(message) {
-    if (process.env.DEBUG === 'true') {
-      console.log(format('DEBUG', message));
-    }
-  },
+  info:    (m) => console.log(`${colors.info}[${ts()}] [INFO] ${m}${colors.reset}`),
+  success: (m) => console.log(`${colors.success}[${ts()}] [SUCCESS] ${m}${colors.reset}`),
+  warn:    (m) => console.warn(`${colors.warn}[${ts()}] [WARN] ${m}${colors.reset}`),
+  error:   (m, e) => console.error(`${colors.error}[${ts()}] [ERROR] ${m}${e ? ' -> ' + e.message : ''}${colors.reset}`),
+  debug:   (m) => console.log(`[${ts()}] [DEBUG] ${m}`),
 };
-
-export default logger;
